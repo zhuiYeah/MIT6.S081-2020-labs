@@ -43,8 +43,7 @@ freerange(void *pa_start, void *pa_end)
 // which normally should have been returned by a
 // call to kalloc().  (The exception is when
 // initializing the allocator; see kinit above.)
-void
-kfree(void *pa)
+void kfree(void *pa)
 {
   struct run *r;
 
@@ -65,8 +64,8 @@ kfree(void *pa)
 // Allocate one 4096-byte page of physical memory.
 // Returns a pointer that the kernel can use.
 // Returns 0 if the memory cannot be allocated.
-void *
-kalloc(void)
+//分配一页4096字节的物理内存。返回一个内核可以使用的指针。如果内存不能分配，则返回0。
+void * kalloc(void)
 {
   struct run *r;
 

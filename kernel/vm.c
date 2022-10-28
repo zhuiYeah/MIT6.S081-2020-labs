@@ -67,7 +67,7 @@ void kvminithart()
 //   12..20 -- 9 bits of level-0 index.
 //    0..11 -- 12 bits of byte offset within the page.
 //返回页表pagetable中虚拟地址va所在的PTE，如果alloc!=0,那么create any required page-table pages.
-pte_t * walk(pagetable_t pagetable, uint64 va, int alloc)
+pte_t *walk(pagetable_t pagetable, uint64 va, int alloc)
 {
   if (va >= MAXVA)
     panic("walk");
@@ -173,7 +173,7 @@ int mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 // Remove npages of mappings starting from va. va must be
 // page-aligned. The mappings must exist.
 // Optionally free the physical memory.
-//删除从va开始的npages B映射。必须页面对齐，映射必须存在。if do_free==1，那么同时释放物理内存
+//删除从va开始的npages B映射。必须页面对齐，映射必须存在(本lab由于实现懒分配，所以映射可以不存在)。if do_free==1，那么同时释放物理内存
 void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 {
   uint64 a;
@@ -184,10 +184,13 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 
   for (a = va; a < va + npages * PGSIZE; a += PGSIZE)
   {
+    //由于 懒分配 ，所以这里不存在的映射直接跳过 ， 不需要panic
     if ((pte = walk(pagetable, a, 0)) == 0)
-      panic("uvmunmap: walk");
+      // panic("uvmunmap: walk");
+      continue;
     if ((*pte & PTE_V) == 0)
-      panic("uvmunmap: not mapped");
+      // panic("uvmunmap: not mapped");
+      continue;
     if (PTE_FLAGS(*pte) == PTE_V)
       panic("uvmunmap: not a leaf");
     if (do_free)

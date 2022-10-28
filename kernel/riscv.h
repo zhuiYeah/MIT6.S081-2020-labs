@@ -224,9 +224,8 @@ r_scause()
   return x;
 }
 
-// Supervisor Trap Value
-static inline uint64
-r_stval()
+// Supervisor Trap Value 在缺页错误中会给出缺页的虚拟地址
+static inline uint64 r_stval()
 {
   uint64 x;
   asm volatile("csrr %0, stval" : "=r" (x) );
@@ -326,7 +325,7 @@ sfence_vma()
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
 
-#define PTE_V (1L << 0) // valid
+#define PTE_V (1L << 0) // valid 该PTE是否有效
 #define PTE_R (1L << 1)
 #define PTE_W (1L << 2)
 #define PTE_X (1L << 3)
