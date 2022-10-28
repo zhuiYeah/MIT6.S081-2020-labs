@@ -54,8 +54,8 @@ argraw(int n)
 }
 
 // Fetch the nth 32-bit system call argument.
-int
-argint(int n, int *ip)
+//从an寄存器中读取int值存入ip中，成功则返回0
+int argint(int n, int *ip)
 {
   *ip = argraw(n);
   return 0;

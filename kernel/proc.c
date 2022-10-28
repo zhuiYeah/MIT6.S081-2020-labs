@@ -235,8 +235,8 @@ userinit(void)
 
 // Grow or shrink user memory by n bytes.
 // Return 0 on success, -1 on failure.
-int
-growproc(int n)
+//将用户内存增加或缩小 n 个字节。成功返回 0，失败返回 -1。
+int growproc(int n)
 {
   uint sz;
   struct proc *p = myproc();
