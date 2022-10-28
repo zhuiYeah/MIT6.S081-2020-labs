@@ -46,14 +46,14 @@ w_mepc(uint64 x)
 
 // Supervisor Status Register, sstatus
 
-#define SSTATUS_SPP (1L << 8)  // Previous mode, 1=Supervisor, 0=User
-#define SSTATUS_SPIE (1L << 5) // Supervisor Previous Interrupt Enable
-#define SSTATUS_UPIE (1L << 4) // User Previous Interrupt Enable
+#define SSTATUS_SPP (1L << 8)  // Previous mode, 1=Supervisor, 0=User,记录cpu在陷入之前处于什么状态
+#define SSTATUS_SPIE (1L << 5) // Supervisor Previous Interrupt Enable ，记录陷入之前的中断使能
+#define SSTATUS_UPIE (1L << 4) // User Previous Interrupt Enable ，
 #define SSTATUS_SIE (1L << 1)  // Supervisor Interrupt Enable
 #define SSTATUS_UIE (1L << 0)  // User Interrupt Enable
 
-static inline uint64
-r_sstatus()
+//得到sstatus寄存器
+static inline uint64 r_sstatus()
 {
   uint64 x;
   asm volatile("csrr %0, sstatus"
@@ -61,8 +61,7 @@ r_sstatus()
   return x;
 }
 
-static inline void
-w_sstatus(uint64 x)
+static inline void w_sstatus(uint64 x)
 {
   asm volatile("csrw sstatus, %0"
                :
@@ -140,8 +139,8 @@ w_sepc(uint64 x)
                : "r"(x));
 }
 
-static inline uint64
-r_sepc()
+//sepc寄存器就是程序计数器，保存trap发生之前执行的最后一条指令的地址
+static inline uint64 r_sepc()
 {
   uint64 x;
   asm volatile("csrr %0, sepc"
@@ -187,16 +186,16 @@ w_mideleg(uint64 x)
 
 // Supervisor Trap-Vector Base Address
 // low two bits are mode.
-static inline void
-w_stvec(uint64 x)
+// 向stvec寄存器的写入地址x。stvec寄存器会存放trap处理代码的入口地址。
+static inline void w_stvec(uint64 x)
 {
   asm volatile("csrw stvec, %0"
                :
                : "r"(x));
 }
 
-static inline uint64
-r_stvec()
+//得到stvec寄存器的值。stvec寄存器会存放trap处理代码的入口地址。
+static inline uint64 r_stvec()
 {
   uint64 x;
   asm volatile("csrr %0, stvec"
@@ -254,9 +253,8 @@ w_mscratch(uint64 x)
                : "r"(x));
 }
 
-// Supervisor Trap Cause
-static inline uint64
-r_scause()
+// Supervisor Trap Cause。scause寄存器描述trap的原因
+static inline uint64 r_scause()
 {
   uint64 x;
   asm volatile("csrr %0, scause"
@@ -303,15 +301,13 @@ r_time()
 }
 
 // enable device interrupts
-static inline void
-intr_on()
+static inline void intr_on()
 {
   w_sstatus(r_sstatus() | SSTATUS_SIE);
 }
 
 // disable device interrupts
-static inline void
-intr_off()
+static inline void intr_off()
 {
   w_sstatus(r_sstatus() & ~SSTATUS_SIE);
 }

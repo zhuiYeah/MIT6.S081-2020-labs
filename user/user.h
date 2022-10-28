@@ -23,6 +23,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int sigalarm(int ticks, void (*handler)()); //来自lab alarm(实现用户级中断/故障处理程序)。如果程序调用了sigalarm，那么在程序运行每tickets个CPU时间后，内核会调用函数handler()
+int sigreturn(void); //来自lab alarm(实现用户级中断/故障处理程序)
 
 // ulib.c
 int stat(const char*, struct stat*);

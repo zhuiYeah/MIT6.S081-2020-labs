@@ -41,6 +41,7 @@ extern struct cpu cpus[NCPU];
 // the trapframe includes callee-saved user registers like s0-s11 because the
 // return-to-user path via usertrapret() doesn't return through
 // the entire kernel call stack.
+//这里存放着每个进程专门给trap处理程序trampoline.S使用的数据。
 struct trapframe {
   /*   0 */ uint64 kernel_satp;   // kernel page table
   /*   8 */ uint64 kernel_sp;     // top of process's kernel stack
@@ -103,4 +104,16 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  //以下字段来自lab alarm ， 为了实现 sigalarm()系统调用，
+  int interval; //记录时间间隔，即sigalarm(n，fn)中的n
+  uint64 handler; //调用的函数信息 ，即fn
+  int ticks; //已经经过的时钟数目，对比当前是否到达n
+
+  //来自lab alarm ，为了实现 sigreturn()系统调用。
+  /*sigreturn() 是为了 从内核态 回到 调用handler之前 的用户态状态，正常来说，这是由 p->trapframe->epc 来实现的,
+   但是在调用sigreturn（）之后,p的trapframe中的epc已经指向了用户态调用sigreturn()之前的状态，
+   因此为了回到调用handler之前的用户状态，需要额外储存handler执行前的trapframe。
+  */
+  struct trapframe *handler_trapframe;
 };
