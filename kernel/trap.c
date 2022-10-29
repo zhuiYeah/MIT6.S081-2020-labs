@@ -64,7 +64,7 @@ void usertrap(void)
 
     syscall();
   }
-  //处理 缺页异常（page fault）
+  //处理 缺页异常（page fault）, 有虚拟地址但没有物理地址，那么在这里做分配
   else if (r_scause() == 13 || r_scause() == 15)
   {
     uint64 va = r_stval();

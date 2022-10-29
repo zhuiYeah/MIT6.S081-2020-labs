@@ -47,7 +47,16 @@ uint64 sys_sbrk(void)
   //为了实现惰性分配，sbrk()只增加名义上的内存大小，并不实际分配值
   // if (growproc(n) < 0)
   //   return -1;
+
+  if (oldsz + n >= MAXVA || oldsz + n <= 0)
+    return oldsz;
   p->sz += n;
+
+  //如果需要增加页面大小的话，我们进行惰性分配，但如果需要减少内存大小的话，那么直接删
+  if (n < 0)
+    uvmdealloc(p->pagetable, oldsz, oldsz + n);
+
+  // sys_sbrk()返回进程原本的大小
   return oldsz;
 }
 

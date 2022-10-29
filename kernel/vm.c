@@ -5,6 +5,9 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h" //头文件的加载顺序居然都有影响，太牛逼（sb）了c语言
+#include "proc.h"
+
 
 /*
  * the kernel's page table.
@@ -66,7 +69,7 @@ void kvminithart()
 //   21..29 -- 9 bits of level-1 index.
 //   12..20 -- 9 bits of level-0 index.
 //    0..11 -- 12 bits of byte offset within the page.
-//返回页表pagetable中虚拟地址va所在的PTE，如果alloc!=0,那么create any required page-table pages.
+//返回页表pagetable中虚拟地址va所在的PTE，不存在则返回0;如果alloc!=0,那么create any required page-table pages.
 pte_t *walk(pagetable_t pagetable, uint64 va, int alloc)
 {
   if (va >= MAXVA)
@@ -93,20 +96,44 @@ pte_t *walk(pagetable_t pagetable, uint64 va, int alloc)
 // Look up a virtual address, return the physical address,
 // or 0 if not mapped.
 // Can only be used to look up user pages.
-//虚拟地址va转化为物理地址
+//虚拟地址va转化为物理地址,如果不存在映射则返回0
+// lab lazytests , 如果用户态将一个有效的虚拟地址传到内核态的某个系统调用，但是该虚拟地址对应的物理地址还没有分配，在这里做分配
 uint64 walkaddr(pagetable_t pagetable, uint64 va)
 {
   pte_t *pte;
   uint64 pa;
-
   if (va >= MAXVA)
     return 0;
 
   pte = walk(pagetable, va, 0);
-  if (pte == 0)
-    return 0;
-  if ((*pte & PTE_V) == 0)
-    return 0;
+  //当前虚拟地址不存在映射 或 映射无效
+  if (pte == 0 || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0)
+  {
+    struct proc *p = myproc();
+    //虚拟地址超出堆大小 或低于栈顶
+    if (va >= p->sz || va <= PGROUNDDOWN(p->trapframe->sp))
+      return 0;
+
+    pa = (uint64)kalloc();
+    if (pa == 0)
+      return 0;
+    if (mappages(pagetable, va, PGSIZE, pa, PTE_W | PTE_R | PTE_X | PTE_U) != 0)
+    {
+      kfree((void *)pa);
+      return 0;
+    }
+    //至此物理地址分配成功，映射成功
+
+    return pa;
+  }
+  // if (pte == 0)
+  //   return 0;
+  // if ((*pte & PTE_V) == 0)
+  //   return 0;
+  // if ((*pte & PTE_U) == 0)
+  //   return 0;
+
+  //映射存在但用户不可使用
   if ((*pte & PTE_U) == 0)
     return 0;
   pa = PTE2PA(*pte);
@@ -266,7 +293,7 @@ uint64 uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 // newsz.  oldsz and newsz need not be page-aligned, nor does newsz
 // need to be less than oldsz.  oldsz can be larger than the actual
 // process size.  Returns the new process size.
-//释放用户页面以将进程大小从 oldsz 带到 newsz。oldsz 和 newsz 不需要是页面对齐的，newsz 也不需要小于 oldsz。 oldsz 可以大于实际进程大小。 返回新的进程大小。
+//释放用户物理内存页以将进程大小从 oldsz 带到 newsz。oldsz 和 newsz 不需要是页面对齐的，newsz 也不需要小于 oldsz。 oldsz 可以大于实际进程大小。 返回新的进程大小。
 uint64 uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 {
   if (newsz >= oldsz)
@@ -322,6 +349,7 @@ void uvmfree(pagetable_t pagetable, uint64 sz)
 // returns 0 on success, -1 on failure.
 // frees any allocated pages on failure.
 //给定父进程的页表，将其内存复制到子进程的页表中。同时复制页表和物理内存。
+//为了lab  lazytest 需要修改 ,
 int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 {
   pte_t *pte;
@@ -331,10 +359,13 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 
   for (i = 0; i < sz; i += PGSIZE)
   {
+    //由于懒分配，这里即使不存在映射无需panic，直接跳过
     if ((pte = walk(old, i, 0)) == 0)
-      panic("uvmcopy: pte should exist");
+      // panic("uvmcopy: pte should exist");
+      continue;
     if ((*pte & PTE_V) == 0)
-      panic("uvmcopy: page not present");
+      // panic("uvmcopy: page not present");
+      continue;
     pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
     if ((mem = kalloc()) == 0)
