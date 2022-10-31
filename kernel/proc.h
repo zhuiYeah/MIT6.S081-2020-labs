@@ -1,4 +1,4 @@
-// Saved registers for kernel context switches.
+// Saved registers for kernel context switches. 这是仅供内核态使用的，用户态做线程切换的话使用的上下文你自己定义
 struct context {
   uint64 ra;
   uint64 sp;
