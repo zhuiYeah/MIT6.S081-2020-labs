@@ -11,8 +11,7 @@
 
 static char digits[] = "0123456789abcdef";
 
-static int
-sputc(char *s, char c)
+static int sputc(char *s, char c)
 {
   *s = c;
   return 1;
@@ -25,27 +24,27 @@ sprintint(char *s, int xx, int base, int sign)
   int i, n;
   uint x;
 
-  if(sign && (sign = xx < 0))
+  if (sign && (sign = xx < 0))
     x = -xx;
   else
     x = xx;
 
   i = 0;
-  do {
+  do
+  {
     buf[i++] = digits[x % base];
-  } while((x /= base) != 0);
+  } while ((x /= base) != 0);
 
-  if(sign)
+  if (sign)
     buf[i++] = '-';
 
   n = 0;
-  while(--i >= 0)
-    n += sputc(s+n, buf[i]);
+  while (--i >= 0)
+    n += sputc(s + n, buf[i]);
   return n;
 }
 
-int
-snprintf(char *buf, int sz, char *fmt, ...)
+int snprintf(char *buf, int sz, char *fmt, ...)
 {
   va_list ap;
   int i, c;
@@ -56,34 +55,37 @@ snprintf(char *buf, int sz, char *fmt, ...)
     panic("null fmt");
 
   va_start(ap, fmt);
-  for(i = 0; off < sz && (c = fmt[i] & 0xff) != 0; i++){
-    if(c != '%'){
-      off += sputc(buf+off, c);
+  for (i = 0; off < sz && (c = fmt[i] & 0xff) != 0; i++)
+  {
+    if (c != '%')
+    {
+      off += sputc(buf + off, c);
       continue;
     }
     c = fmt[++i] & 0xff;
-    if(c == 0)
+    if (c == 0)
       break;
-    switch(c){
+    switch (c)
+    {
     case 'd':
-      off += sprintint(buf+off, va_arg(ap, int), 10, 1);
+      off += sprintint(buf + off, va_arg(ap, int), 10, 1);
       break;
     case 'x':
-      off += sprintint(buf+off, va_arg(ap, int), 16, 1);
+      off += sprintint(buf + off, va_arg(ap, int), 16, 1);
       break;
     case 's':
-      if((s = va_arg(ap, char*)) == 0)
+      if ((s = va_arg(ap, char *)) == 0)
         s = "(null)";
-      for(; *s && off < sz; s++)
-        off += sputc(buf+off, *s);
+      for (; *s && off < sz; s++)
+        off += sputc(buf + off, *s);
       break;
     case '%':
-      off += sputc(buf+off, '%');
+      off += sputc(buf + off, '%');
       break;
     default:
       // Print unknown % sequence to draw attention.
-      off += sputc(buf+off, '%');
-      off += sputc(buf+off, c);
+      off += sputc(buf + off, '%');
+      off += sputc(buf + off, c);
       break;
     }
   }
