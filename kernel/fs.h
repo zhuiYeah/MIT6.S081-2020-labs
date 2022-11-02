@@ -1,6 +1,6 @@
 // On-disk file system format.
 // Both the kernel and user programs use this header file.
-
+//定义了磁盘的格式
 
 #define ROOTINO  1   // root i-number
 #define BSIZE 1024  // block size
@@ -24,18 +24,21 @@ struct superblock {
 
 #define FSMAGIC 0x10203040
 
-#define NDIRECT 12
-#define NINDIRECT (BSIZE / sizeof(uint))
-#define MAXFILE (NDIRECT + NINDIRECT)
+//#define NDIRECT 12    //一个inode会有12个直接索引
+#define NDIRECT 11   //来自lab large file 为二级索引腾出一个位置
+#define NINDIRECT (BSIZE / sizeof(uint)) //以个一级索引地址能指向的大小，这里是1024/4=256
+#define NDINDIRECT NINDIRECT*NINDIRECT   //256*256  一个二级索引地址能指向的大小
+#define MAXFILE (NDIRECT + NINDIRECT + NDINDIRECT) //最大文件就为 12 + 256 个BSIZE大小
 
-// On-disk inode structure
+// On-disk inode structure 
+//磁盘中使用的inode结构，另外还有内存中使用的inode结构
 struct dinode {
   short type;           // File type
   short major;          // Major device number (T_DEVICE only)
   short minor;          // Minor device number (T_DEVICE only)
-  short nlink;          // Number of links to inode in file system
+  short nlink;          // Number of links to inode in file system 文件系统中指向该inode的链接数
   uint size;            // Size of file (bytes)
-  uint addrs[NDIRECT+1];   // Data block addresses
+  uint addrs[NDIRECT+1+1];   // Data block addresses 包含直接索引+一级索引+二级索引
 };
 
 // Inodes per block.

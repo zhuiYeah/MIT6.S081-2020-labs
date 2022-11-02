@@ -6,7 +6,7 @@ struct buf {
   struct sleeplock lock;
   uint refcnt;
   struct buf *prev; // LRU cache list
-  struct buf *next;
-  uchar data[BSIZE];
+  struct buf *next; //最近使用过的
+  uchar data[BSIZE];//这就是这一块存的数据咯
 };
 

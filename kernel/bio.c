@@ -89,8 +89,8 @@ bget(uint dev, uint blockno)
 }
 
 // Return a locked buf with the contents of the indicated block.
-struct buf*
-bread(uint dev, uint blockno)
+//返回块blockno对应的有锁buffer
+struct buf* bread(uint dev, uint blockno)
 {
   struct buf *b;
 
@@ -113,6 +113,7 @@ bwrite(struct buf *b)
 
 // Release a locked buffer.
 // Move to the head of the most-recently-used list.
+//释放buffer（必须以带锁的状态调用该函数），移到bcache.next
 void
 brelse(struct buf *b)
 {
