@@ -4,4 +4,4 @@
 #define O_RDWR    0x002  //以读写方式打开
 #define O_CREATE  0x200  //该文件需要被创建
 #define O_TRUNC   0x400  
-#define O_NOFOLLOW 0x800 //来自lab 符号链接，以
+#define O_NOFOLLOW 0x800 //来自lab 符号链接，直接打开该符号链接文件，不要读取这个符号链接文件里面inode.data指向的target文件的地址了
