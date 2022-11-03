@@ -23,6 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int symlink(const char*,const char*); //来自lab symbolic links
 
 // ulib.c
 int stat(const char*, struct stat*);

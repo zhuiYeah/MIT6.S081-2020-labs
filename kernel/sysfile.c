@@ -4,6 +4,10 @@
 // user code, and calls into file.c and fs.c.
 //
 
+/*  文件系统相关系统调用。
+   主要是参数检查，因为我们不信任用户代码，并最终调用 file.c 和 fs.c。
+*/
+
 #include "types.h"
 #include "riscv.h"
 #include "defs.h"
@@ -18,33 +22,35 @@
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
-static int
-argfd(int n, int *pfd, struct file **pf)
+//获取an寄存器储存的系统调用参数作为文件描述符，文件描述符写入*pfd中，结构文件写入**pf中，成功则返回0
+static int argfd(int n, int *pfd, struct file **pf)
 {
   int fd;
   struct file *f;
 
-  if(argint(n, &fd) < 0)
+  if (argint(n, &fd) < 0)
     return -1;
-  if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0)
+  if (fd < 0 || fd >= NOFILE || (f = myproc()->ofile[fd]) == 0)
     return -1;
-  if(pfd)
+  if (pfd)
     *pfd = fd;
-  if(pf)
+  if (pf)
     *pf = f;
   return 0;
 }
 
 // Allocate a file descriptor for the given file.
 // Takes over file reference from caller on success.
-static int
-fdalloc(struct file *f)
+//为给定文件分配一个文件描述符，成功时从调用者那里接管文件引用。成功时返回文件描述符fd，失败时返回-1.
+static int fdalloc(struct file *f)
 {
   int fd;
   struct proc *p = myproc();
 
-  for(fd = 0; fd < NOFILE; fd++){
-    if(p->ofile[fd] == 0){
+  for (fd = 0; fd < NOFILE; fd++)
+  {
+    if (p->ofile[fd] == 0)
+    {
       p->ofile[fd] = f;
       return fd;
     }
@@ -52,28 +58,28 @@ fdalloc(struct file *f)
   return -1;
 }
 
-uint64
-sys_dup(void)
+uint64 sys_dup(void)
 {
   struct file *f;
   int fd;
 
-  if(argfd(0, 0, &f) < 0)
+  if (argfd(0, 0, &f) < 0)
     return -1;
-  if((fd=fdalloc(f)) < 0)
+  if ((fd = fdalloc(f)) < 0)
     return -1;
   filedup(f);
   return fd;
 }
 
-uint64
-sys_read(void)
+uint64 sys_read(void)
 {
+  // f是要read的文件，n是要读的字节数，p是读取的内容将存放在的数据区
+  //将文件f的前n个字节写入缓冲区p
   struct file *f;
   int n;
   uint64 p;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
+  if (argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
     return -1;
   return fileread(f, p, n);
 }
@@ -81,11 +87,12 @@ sys_read(void)
 uint64
 sys_write(void)
 {
+  //将缓冲区p的前n个字节写入文件f中
   struct file *f;
   int n;
   uint64 p;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
+  if (argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
     return -1;
 
   return filewrite(f, p, n);
@@ -97,7 +104,7 @@ sys_close(void)
   int fd;
   struct file *f;
 
-  if(argfd(0, &fd, &f) < 0)
+  if (argfd(0, &fd, &f) < 0)
     return -1;
   myproc()->ofile[fd] = 0;
   fileclose(f);
@@ -110,29 +117,31 @@ sys_fstat(void)
   struct file *f;
   uint64 st; // user pointer to struct stat
 
-  if(argfd(0, 0, &f) < 0 || argaddr(1, &st) < 0)
+  if (argfd(0, 0, &f) < 0 || argaddr(1, &st) < 0)
     return -1;
   return filestat(f, st);
 }
 
 // Create the path new as a link to the same inode as old.
-uint64
-sys_link(void)
+//创建新的path 作为指向 旧inode相同的链接
+uint64 sys_link(void)
 {
   char name[DIRSIZ], new[MAXPATH], old[MAXPATH];
   struct inode *dp, *ip;
 
-  if(argstr(0, old, MAXPATH) < 0 || argstr(1, new, MAXPATH) < 0)
+  if (argstr(0, old, MAXPATH) < 0 || argstr(1, new, MAXPATH) < 0)
     return -1;
 
   begin_op();
-  if((ip = namei(old)) == 0){
+  if ((ip = namei(old)) == 0)
+  {
     end_op();
     return -1;
   }
 
   ilock(ip);
-  if(ip->type == T_DIR){
+  if (ip->type == T_DIR)
+  {
     iunlockput(ip);
     end_op();
     return -1;
@@ -142,10 +151,11 @@ sys_link(void)
   iupdate(ip);
   iunlock(ip);
 
-  if((dp = nameiparent(new, name)) == 0)
+  if ((dp = nameiparent(new, name)) == 0)
     goto bad;
   ilock(dp);
-  if(dp->dev != ip->dev || dirlink(dp, name, ip->inum) < 0){
+  if (dp->dev != ip->dev || dirlink(dp, name, ip->inum) < 0)
+  {
     iunlockput(dp);
     goto bad;
   }
@@ -166,34 +176,35 @@ bad:
 }
 
 // Is the directory dp empty except for "." and ".." ?
-static int
-isdirempty(struct inode *dp)
+//目录 struct inode *dp 是不是空的
+static int isdirempty(struct inode *dp)
 {
   int off;
   struct dirent de;
 
-  for(off=2*sizeof(de); off<dp->size; off+=sizeof(de)){
-    if(readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+  for (off = 2 * sizeof(de); off < dp->size; off += sizeof(de))
+  {
+    if (readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
       panic("isdirempty: readi");
-    if(de.inum != 0)
+    if (de.inum != 0)
       return 0;
   }
   return 1;
 }
 
-uint64
-sys_unlink(void)
+uint64 sys_unlink(void)
 {
   struct inode *ip, *dp;
   struct dirent de;
   char name[DIRSIZ], path[MAXPATH];
   uint off;
 
-  if(argstr(0, path, MAXPATH) < 0)
+  if (argstr(0, path, MAXPATH) < 0)
     return -1;
 
   begin_op();
-  if((dp = nameiparent(path, name)) == 0){
+  if ((dp = nameiparent(path, name)) == 0)
+  {
     end_op();
     return -1;
   }
@@ -201,24 +212,26 @@ sys_unlink(void)
   ilock(dp);
 
   // Cannot unlink "." or "..".
-  if(namecmp(name, ".") == 0 || namecmp(name, "..") == 0)
+  if (namecmp(name, ".") == 0 || namecmp(name, "..") == 0)
     goto bad;
 
-  if((ip = dirlookup(dp, name, &off)) == 0)
+  if ((ip = dirlookup(dp, name, &off)) == 0)
     goto bad;
   ilock(ip);
 
-  if(ip->nlink < 1)
+  if (ip->nlink < 1)
     panic("unlink: nlink < 1");
-  if(ip->type == T_DIR && !isdirempty(ip)){
+  if (ip->type == T_DIR && !isdirempty(ip))
+  {
     iunlockput(ip);
     goto bad;
   }
 
   memset(&de, 0, sizeof(de));
-  if(writei(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+  if (writei(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
     panic("unlink: writei");
-  if(ip->type == T_DIR){
+  if (ip->type == T_DIR)
+  {
     dp->nlink--;
     iupdate(dp);
   }
@@ -238,27 +251,28 @@ bad:
   return -1;
 }
 
-static struct inode*
-create(char *path, short type, short major, short minor)
+//创建inode
+static struct inode *create(char *path, short type, short major, short minor)
 {
   struct inode *ip, *dp;
   char name[DIRSIZ];
 
-  if((dp = nameiparent(path, name)) == 0)
+  if ((dp = nameiparent(path, name)) == 0)
     return 0;
 
   ilock(dp);
 
-  if((ip = dirlookup(dp, name, 0)) != 0){
+  if ((ip = dirlookup(dp, name, 0)) != 0)
+  {
     iunlockput(dp);
     ilock(ip);
-    if(type == T_FILE && (ip->type == T_FILE || ip->type == T_DEVICE))
+    if (type == T_FILE && (ip->type == T_FILE || ip->type == T_DEVICE))
       return ip;
     iunlockput(ip);
     return 0;
   }
 
-  if((ip = ialloc(dp->dev, type)) == 0)
+  if ((ip = ialloc(dp->dev, type)) == 0)
     panic("create: ialloc");
 
   ilock(ip);
@@ -267,15 +281,16 @@ create(char *path, short type, short major, short minor)
   ip->nlink = 1;
   iupdate(ip);
 
-  if(type == T_DIR){  // Create . and .. entries.
-    dp->nlink++;  // for ".."
+  if (type == T_DIR)
+  {              // Create . and .. entries.
+    dp->nlink++; // for ".."
     iupdate(dp);
     // No ip->nlink++ for ".": avoid cyclic ref count.
-    if(dirlink(ip, ".", ip->inum) < 0 || dirlink(ip, "..", dp->inum) < 0)
+    if (dirlink(ip, ".", ip->inum) < 0 || dirlink(ip, "..", dp->inum) < 0)
       panic("create dots");
   }
 
-  if(dirlink(dp, name, ip->inum) < 0)
+  if (dirlink(dp, name, ip->inum) < 0)
     panic("create: dirlink");
 
   iunlockput(dp);
@@ -283,57 +298,103 @@ create(char *path, short type, short major, short minor)
   return ip;
 }
 
-uint64
-sys_open(void)
+// lab 符号链接 需要修改open(const char * path , int openmode )系统调用
+/*在打开文件时，如果遇到符号链接，直接打开对应的文件。这里为了避免符号链接之间相互链接导致死循环，设置一定访问深度
+ ，如果到达该访问深度，则说明打开该文件失败。每次读取对应的inode，然后根据其中的文件名找到对应的inode，然后判断该inode是否为符号链接
+ */
+uint64 sys_open(void)
 {
   char path[MAXPATH];
   int fd, omode;
   struct file *f;
   struct inode *ip;
-  int n;
-
-  if((n = argstr(0, path, MAXPATH)) < 0 || argint(1, &omode) < 0)
+  int n; //路径的实际长度
+  //得到文件路径path，文件的打开方式omode,路径的长度n
+  if ((n = argstr(0, path, MAXPATH)) < 0 || argint(1, &omode) < 0)
     return -1;
 
   begin_op();
 
-  if(omode & O_CREATE){
+  //得到文件的inode，并锁定该inode
+  if (omode & O_CREATE)
+  {
     ip = create(path, T_FILE, 0, 0);
-    if(ip == 0){
+    if (ip == 0)
+    {
       end_op();
       return -1;
     }
-  } else {
-    if((ip = namei(path)) == 0){
+  }
+  else
+  {
+    if ((ip = namei(path)) == 0)
+    {
       end_op();
       return -1;
     }
     ilock(ip);
-    if(ip->type == T_DIR && omode != O_RDONLY){
+    if (ip->type == T_DIR && omode != O_RDONLY)
+    {
       iunlockput(ip);
       end_op();
       return -1;
     }
   }
 
-  if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)){
+  /*以下来自lab 符号链接*/
+  int depth = 0; //设定访问深度防止符号链接文件之间死循环
+  //不断判断 ，当omode含有标志位NOFOLLOW的时候，就打开符号链接文件而不是follow他，所以只有当当前文件为T_SYMLINK文件 且 omode未指定nofollow的时候，才跟随该符号链接文件寻找他的下一个指向
+  while (ip->type == T_SYMLINK && !(omode & O_NOFOLLOW))
+  {
+    //如果访问深度过大，则退出
+    if (depth++ >= 20)
+    {
+      iunlockput(ip);
+      end_op();
+      return -1;
+    }
+    //从inode读取数据，读取到path中，于是path变成了符号链接指向的文件
+    if (readi(ip, 0, (uint64)path, 0, MAXPATH) < MAXPATH)
+    {
+      iunlockput(ip);
+      end_op();
+      return -1;
+    }
+    iunlockput(ip);
+    //根据新的文件名称找到对应的新的inode
+    ip = namei(path);
+    if (ip == 0)
+    {
+      end_op();
+      return -1;
+    }
+    ilock(ip);
+  }
+  /*以上来自lab 符号链接*/
+
+  if (ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV))
+  {
     iunlockput(ip);
     end_op();
     return -1;
   }
 
-  if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
-    if(f)
+  if ((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0)
+  {
+    if (f)
       fileclose(f);
     iunlockput(ip);
     end_op();
     return -1;
   }
 
-  if(ip->type == T_DEVICE){
+  if (ip->type == T_DEVICE)
+  {
     f->type = FD_DEVICE;
     f->major = ip->major;
-  } else {
+  }
+  else
+  {
     f->type = FD_INODE;
     f->off = 0;
   }
@@ -341,7 +402,8 @@ sys_open(void)
   f->readable = !(omode & O_WRONLY);
   f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
 
-  if((omode & O_TRUNC) && ip->type == T_FILE){
+  if ((omode & O_TRUNC) && ip->type == T_FILE)
+  {
     itrunc(ip);
   }
 
@@ -358,7 +420,8 @@ sys_mkdir(void)
   struct inode *ip;
 
   begin_op();
-  if(argstr(0, path, MAXPATH) < 0 || (ip = create(path, T_DIR, 0, 0)) == 0){
+  if (argstr(0, path, MAXPATH) < 0 || (ip = create(path, T_DIR, 0, 0)) == 0)
+  {
     end_op();
     return -1;
   }
@@ -375,10 +438,11 @@ sys_mknod(void)
   int major, minor;
 
   begin_op();
-  if((argstr(0, path, MAXPATH)) < 0 ||
-     argint(1, &major) < 0 ||
-     argint(2, &minor) < 0 ||
-     (ip = create(path, T_DEVICE, major, minor)) == 0){
+  if ((argstr(0, path, MAXPATH)) < 0 ||
+      argint(1, &major) < 0 ||
+      argint(2, &minor) < 0 ||
+      (ip = create(path, T_DEVICE, major, minor)) == 0)
+  {
     end_op();
     return -1;
   }
@@ -393,14 +457,16 @@ sys_chdir(void)
   char path[MAXPATH];
   struct inode *ip;
   struct proc *p = myproc();
-  
+
   begin_op();
-  if(argstr(0, path, MAXPATH) < 0 || (ip = namei(path)) == 0){
+  if (argstr(0, path, MAXPATH) < 0 || (ip = namei(path)) == 0)
+  {
     end_op();
     return -1;
   }
   ilock(ip);
-  if(ip->type != T_DIR){
+  if (ip->type != T_DIR)
+  {
     iunlockput(ip);
     end_op();
     return -1;
@@ -419,37 +485,42 @@ sys_exec(void)
   int i;
   uint64 uargv, uarg;
 
-  if(argstr(0, path, MAXPATH) < 0 || argaddr(1, &uargv) < 0){
+  if (argstr(0, path, MAXPATH) < 0 || argaddr(1, &uargv) < 0)
+  {
     return -1;
   }
   memset(argv, 0, sizeof(argv));
-  for(i=0;; i++){
-    if(i >= NELEM(argv)){
+  for (i = 0;; i++)
+  {
+    if (i >= NELEM(argv))
+    {
       goto bad;
     }
-    if(fetchaddr(uargv+sizeof(uint64)*i, (uint64*)&uarg) < 0){
+    if (fetchaddr(uargv + sizeof(uint64) * i, (uint64 *)&uarg) < 0)
+    {
       goto bad;
     }
-    if(uarg == 0){
+    if (uarg == 0)
+    {
       argv[i] = 0;
       break;
     }
     argv[i] = kalloc();
-    if(argv[i] == 0)
+    if (argv[i] == 0)
       goto bad;
-    if(fetchstr(uarg, argv[i], PGSIZE) < 0)
+    if (fetchstr(uarg, argv[i], PGSIZE) < 0)
       goto bad;
   }
 
   int ret = exec(path, argv);
 
-  for(i = 0; i < NELEM(argv) && argv[i] != 0; i++)
+  for (i = 0; i < NELEM(argv) && argv[i] != 0; i++)
     kfree(argv[i]);
 
   return ret;
 
- bad:
-  for(i = 0; i < NELEM(argv) && argv[i] != 0; i++)
+bad:
+  for (i = 0; i < NELEM(argv) && argv[i] != 0; i++)
     kfree(argv[i]);
   return -1;
 }
@@ -462,25 +533,64 @@ sys_pipe(void)
   int fd0, fd1;
   struct proc *p = myproc();
 
-  if(argaddr(0, &fdarray) < 0)
+  if (argaddr(0, &fdarray) < 0)
     return -1;
-  if(pipealloc(&rf, &wf) < 0)
+  if (pipealloc(&rf, &wf) < 0)
     return -1;
   fd0 = -1;
-  if((fd0 = fdalloc(rf)) < 0 || (fd1 = fdalloc(wf)) < 0){
-    if(fd0 >= 0)
+  if ((fd0 = fdalloc(rf)) < 0 || (fd1 = fdalloc(wf)) < 0)
+  {
+    if (fd0 >= 0)
       p->ofile[fd0] = 0;
     fileclose(rf);
     fileclose(wf);
     return -1;
   }
-  if(copyout(p->pagetable, fdarray, (char*)&fd0, sizeof(fd0)) < 0 ||
-     copyout(p->pagetable, fdarray+sizeof(fd0), (char *)&fd1, sizeof(fd1)) < 0){
+  if (copyout(p->pagetable, fdarray, (char *)&fd0, sizeof(fd0)) < 0 ||
+      copyout(p->pagetable, fdarray + sizeof(fd0), (char *)&fd1, sizeof(fd1)) < 0)
+  {
     p->ofile[fd0] = 0;
     p->ofile[fd1] = 0;
     fileclose(rf);
     fileclose(wf);
     return -1;
   }
+  return 0;
+}
+
+//建立链接，在path路径上新建一个 符号链接文件 链接到 target
+/*
+  先从寄存器读取参数path、 target，然后开启事务，避免提交出错；
+  为这个符号链接新建一个inode；
+  在符号链接的data里面写入被链接的文件；
+  最后提交事务
+*/
+uint64 sys_symlink(void)
+{
+  char path[MAXPATH], target[MAXPATH];
+  struct inode *ip;
+  if (argstr(0, target, MAXPATH) < 0)
+    return -1;
+  if (argstr(1, path, MAXPATH) < 0)
+    return -1;
+  //开启事务
+  begin_op();
+  //为这个符号链接新建一个inode
+  ip = create(path, T_SYMLINK, 0, 0);
+  if (ip == 0)
+  {
+    end_op();
+    return -1;
+  }
+  //在符号链接的data处写入被链接的文件，即将target的地址写入inode *ip中
+  if (writei(ip, 0, (uint64)target, 0, MAXPATH) < MAXPATH)
+  {
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }
+  //提交事务 . 因为符号链接文件已经建立完成啦，写入了磁盘里面，所有内存中的该符号链接文件的inode *ip 已经失去作用了，解锁并释放他
+  iunlockput(ip);
+  end_op();
   return 0;
 }

@@ -123,6 +123,7 @@ recover_from_log(void)
 }
 
 // called at the start of each FS system call.
+//在每个fs相关的系统调用开始时调用
 void
 begin_op(void)
 {

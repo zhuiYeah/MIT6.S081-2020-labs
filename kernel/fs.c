@@ -372,7 +372,7 @@ void iunlock(struct inode *ip)
 // All calls to iput() must be inside a transaction in
 // case it has to free the inode.
 //删除对内存中的 inode 的引用。如果那是最后一个引用，inode 缓存条目可以被回收。
-//如果这是最后一个引用并且 inode 没有指向它的链接，则释放磁盘上的 inode（及其内容）。
+//如果这是最后一个引用并且 inode 没有指向它的链接，则释放磁盘上的 inode（及其内容）。可以用于mkdir系统调用。
 //所有对 iput() 的调用都必须在transaction中，以防它必须释放 inode。
 void iput(struct inode *ip)
 {
@@ -818,8 +818,8 @@ namex(char *path, int nameiparent, char *name)
   return ip;
 }
 
-struct inode *
-namei(char *path)
+//给定文件的path，得到文件的inode *
+struct inode *namei(char *path)
 {
   char name[DIRSIZ];
   return namex(path, 0, name);

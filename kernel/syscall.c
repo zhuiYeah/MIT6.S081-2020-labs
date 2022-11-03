@@ -31,8 +31,8 @@ fetchstr(uint64 addr, char *buf, int max)
   return strlen(buf);
 }
 
-static uint64
-argraw(int n)
+//用户态陷入内核态之后，寄存器的信息会保存到trapframe中，该函数获取用户态陷入之前的寄存器a0~a5的值，也就是系统调用的参数
+static uint64 argraw(int n)
 {
   struct proc *p = myproc();
   switch (n) {
@@ -74,8 +74,8 @@ argaddr(int n, uint64 *ip)
 // Fetch the nth word-sized system call argument as a null-terminated string.
 // Copies into buf, at most max.
 // Returns string length if OK (including nul), -1 if error.
-int
-argstr(int n, char *buf, int max)
+//将an寄存器，即第n个系统调用的值写入buf中，最多写max，写入失败的话返回-1，成功的话则返回实际写入的长度
+int argstr(int n, char *buf, int max)
 {
   uint64 addr;
   if(argaddr(n, &addr) < 0)
@@ -104,6 +104,7 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_wait(void);
 extern uint64 sys_write(void);
 extern uint64 sys_uptime(void);
+extern uint64 sys_symlink(void);
 
 static uint64 (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -127,6 +128,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_symlink] sys_symlink,
 };
 
 void
