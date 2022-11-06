@@ -1,3 +1,5 @@
+/*来自lab mmap ，通过该测试 mmap就算完成了*/
+
 #include "kernel/param.h"
 #include "kernel/fcntl.h"
 #include "kernel/types.h"

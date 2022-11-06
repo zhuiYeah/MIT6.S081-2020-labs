@@ -452,6 +452,8 @@ stati(struct inode *ip, struct stat *st)
 // Caller must hold ip->lock.
 // If user_dst==1, then dst is a user virtual address;
 // otherwise, dst is a kernel address.
+//从struct inode *ip中读取n字节的内容到dst中（如果user_dst == 1,那么dst是虚拟地址）
+//肯定不可能所有情况都行文件的头开始读，所以文件的便宜量为off
 int
 readi(struct inode *ip, int user_dst, uint64 dst, uint off, uint n)
 {
