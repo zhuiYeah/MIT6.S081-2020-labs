@@ -1,33 +1,75 @@
+// {
+//     "version": "0.2.0",
+//     "configurations": [
+
+//         {
+//             "name": "debug xv6",
+//             "type": "cppdbg",
+//             "request": "launch",
+//             "program": "${workspaceFolder}/kernel/kernel",
+//             "args": [],
+//             "stopAtEntry": true,
+//             "cwd": "${workspaceFolder}",
+//             "miDebuggerServerAddress": "localhost:25000",
+//             "miDebuggerPath": "/usr/bin/gdb-multiarch",
+//             "environment": [],
+//             "externalConsole": true,
+//             "MIMode": "gdb",
+//             "setupCommands": [
+//                 {
+//                     "description": "pretty printing",
+//                     "text": "-enable-pretty-printing",
+//                     "ignoreFailures": true
+//                 }
+//             ],
+//             "logging": {
+//                 "engineLogging": true,
+//                 "programOutput": true
+//             }
+//         },
+//         {
+//             "name": "C/C++: gcc 生成和调试活动文件",
+//             "type": "cppdbg",
+//             "request": "launch",
+//             "program": "${fileDirname}/${fileBasenameNoExtension}",
+//             "args": [],
+//             "stopAtEntry": false,
+//             "cwd": "${fileDirname}",
+//             "environment": [],
+//             "externalConsole": false,
+//             "MIMode": "gdb",
+//             "setupCommands": [
+//                 {
+//                     "description": "为 gdb 启用整齐打印",
+//                     "text": "-enable-pretty-printing",
+//                     "ignoreFailures": true
+//                 },
+//                 {
+//                     "description": "将反汇编风格设置为 Intel",
+//                     "text": "-gdb-set disassembly-flavor intel",
+//                     "ignoreFailures": true
+//                 }
+//             ],
+//             "preLaunchTask": "C/C++: gcc 生成活动文件",
+//             "miDebuggerPath": "/usr/bin/gdb"
+//         }
+//     ]
+// }
 
 {
     "version": "0.2.0",
     "configurations": [
         {
-    //本配置文件就是相当于在命令行里输入 /usr/local/opt/riscv-gnu-toolchain/bin/riscv64-unknown-elf-gdb  kernel/kernel
-            "name": "debug xv6",
+            "name": "xv6debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/kernel/kernel",
-            "args": [],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
-            "miDebuggerServerAddress": "localhost:25000",
-            "miDebuggerPath": "/usr/bin/gdb-multiarch",
-            "environment": [],
-            "externalConsole": true,
+            "miDebuggerServerAddress": "127.0.0.1:25000", //见.gdbinit 中 target remote xxxx:xx
+            "miDebuggerPath": "/usr/bin/gdb-multiarch", // which gdb-multiarch
             "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "pretty printing",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "logging": {
-                "engineLogging": true,
-                "programOutput": true,
-            }
-            // "preLaunchTask": "Open Terminal"
+            "preLaunchTask": "xv6build"
         }
     ]
 }

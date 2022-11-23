@@ -31,7 +31,7 @@ void trapinithart(void)
 // handle an interrupt, exception, or system call from user space.
 // called from trampoline.S
 //
-//处理来自用户空间的中断、异常或系统调用。从 trampoline.S 调用
+//处理来自用户空间的中断、异常或系统调用。从 trampoline.S 调用该函数
 void usertrap(void)
 {
   int which_dev = 0;
@@ -58,7 +58,8 @@ void usertrap(void)
 
     // sepc points to the ecall instruction,
     // but we want to return to the next instruction.
-    // sepc寄存器指向引起trap的那条指令，trap返回后，需要执行下一条指令,于是+4（一条指令占4B）
+    // epc就是用户陷入前的最后一条指令的地址
+    //sepc寄存器指向引起trap的那条指令，trap返回后，需要执行下一条指令,于是+4（一条指令占4B）
     p->trapframe->epc += 4;
 
     // an interrupt will change sstatus &c registers,

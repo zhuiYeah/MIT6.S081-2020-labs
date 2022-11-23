@@ -41,7 +41,7 @@ extern struct cpu cpus[NCPU];
 // the trapframe includes callee-saved user registers like s0-s11 because the
 // return-to-user path via usertrapret() doesn't return through
 // the entire kernel call stack.
-//这里存放着每个进程专门给trap处理程序trampoline.S使用的数据。
+//这里存放着每个进程专门给trap处理程序trampoline.S使用的数据。放在地址空间的最顶端那一页，ecall的瞬间会填充满这一页
 struct trapframe {
   /*   0 */ uint64 kernel_satp;   // kernel page table
   /*   8 */ uint64 kernel_sp;     // top of process's kernel stack
