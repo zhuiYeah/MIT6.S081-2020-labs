@@ -6,6 +6,9 @@
         "riscv.h": "c",
         "param.h": "c",
         "defs.h": "c",
-        "fcntl.h": "c"
+        "fcntl.h": "c",
+        "time.h": "c",
+        "memlayout.h": "c",
+        "spinlock.h": "c"
     }
 }
