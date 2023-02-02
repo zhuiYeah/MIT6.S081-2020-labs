@@ -9,6 +9,10 @@
         "fcntl.h": "c",
         "time.h": "c",
         "memlayout.h": "c",
-        "spinlock.h": "c"
+        "spinlock.h": "c",
+        "cmath": "c",
+        "type_traits": "c",
+        "limits": "c",
+        "typeinfo": "c"
     }
 }
