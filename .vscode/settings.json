@@ -3,6 +3,11 @@
         "stat.h": "c",
         "types.h": "c",
         "user.h": "c",
-        "cstdio": "c"
+        "cstdio": "c",
+        "stdio.h": "c",
+        "time.h": "c",
+        "limits": "c",
+        "*.tcc": "c",
+        "type_traits": "c"
     }
 }
