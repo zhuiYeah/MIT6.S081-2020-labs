@@ -259,7 +259,7 @@ int
 fork(void)
 {
   int i, pid;
-  struct proc *np;
+  struct proc *np; //子进程
   struct proc *p = myproc();
 
   // Allocate process.
@@ -282,6 +282,9 @@ fork(void)
 
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
+
+  //复制父进程的mask参数，这是trace系统调用的需要
+  np->mask = p ->mask;
 
   // increment reference counts on open file descriptors.
   for(i = 0; i < NOFILE; i++)

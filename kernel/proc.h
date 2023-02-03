@@ -103,4 +103,6 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  int mask;//sys_trace 系统调用需要借助此掩码来调查进程运行中是否执行了某些系统调用
 };
