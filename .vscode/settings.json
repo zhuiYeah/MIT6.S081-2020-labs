@@ -8,6 +8,8 @@
         "time.h": "c",
         "limits": "c",
         "*.tcc": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "defs.h": "c",
+        "riscv.h": "c"
     }
 }

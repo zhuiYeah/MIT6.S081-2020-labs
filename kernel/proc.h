@@ -103,4 +103,8 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  //为了实现cpu记时
+  uint64 all_ticks;
+  uint64 last_tick;
 };
