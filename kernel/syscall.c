@@ -64,7 +64,7 @@ int argint(int n, int *ip)
 // Retrieve an argument as a pointer.
 // Doesn't check for legality, since
 // copyin/copyout will do that.
-//从an寄存器中取出地址（uint64类型）写入ip中
+//从an寄存器中取出地址（uint64类型）写入ip(uint64)中
 int argaddr(int n, uint64 *ip)
 {
   *ip = argraw(n);
@@ -106,6 +106,7 @@ extern uint64 sys_uptime(void);
 extern uint64 sys_sigalarm(void);
 extern uint64 sys_sigreturn(void);
 
+//函数指针 数组
 static uint64 (*syscalls[])(void) = {
     [SYS_fork] sys_fork,
     [SYS_exit] sys_exit,

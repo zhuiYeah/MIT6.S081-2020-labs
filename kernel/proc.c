@@ -527,6 +527,7 @@ void scheduler(void)
     if (found == 0)
     {
       intr_on();
+      // “volatile”关键字用于防止编译器优化汇编指令 wait for interrupt,该指令可以让cpu进入低功耗状态直到发生中断才进入正常状态
       asm volatile("wfi");
     }
 #else

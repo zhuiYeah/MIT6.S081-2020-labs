@@ -13,6 +13,10 @@
         "cmath": "c",
         "type_traits": "c",
         "limits": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "stdio.h": "c",
+        "proc.h": "c",
+        "*.tcc": "c",
+        "stdarg.h": "c"
     }
 }
