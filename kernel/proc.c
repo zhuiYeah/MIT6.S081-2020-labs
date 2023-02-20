@@ -287,6 +287,10 @@ int fork(void)
 
   np->parent = p;
 
+  //fork时不继承父进程的cpu tick信息，而是使用全新的
+  np->all_ticks = 0;
+  np->last_tick = ticks;
+
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
