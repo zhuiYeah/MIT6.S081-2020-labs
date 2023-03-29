@@ -143,7 +143,7 @@ static struct buf *bget(uint dev, uint blockno)
             min_ticks = b->lastuse;
             b2 = b;
         }
-    }
+    } //b2就是被lru的那一个内存块
     if (b2)
     {
         b2->dev = dev;

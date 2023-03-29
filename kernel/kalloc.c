@@ -63,6 +63,7 @@ void kfree(void *pa)
   int id = cpuid();
   pop_off();
 
+  //将这一个物理页放入当前cpu的空闲链表中
   acquire(&kmem[id].lock);
   r->next = kmem[id].freelist;
   kmem[id].freelist = r;
